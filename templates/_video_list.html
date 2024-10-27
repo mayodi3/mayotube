@@ -1,0 +1,77 @@
+{% for video in videos %}
+<div class="video-card">
+  <img
+    class="thumbnail"
+    src="{{ video['thumbnail'] }}"
+    alt="{{ video['title'] }}"
+  />
+
+  <div class="video-info">
+    <h3 class="video-title">{{ video['title'] }}</h3>
+    <p class="video-uploaded">Uploaded on: {{ video['uploaded'] }}</p>
+  </div>
+
+  <form
+    class="download-form"
+    action="/download"
+    method="post"
+    onsubmit="handleDownload(event)"
+  >
+    <input type="hidden" name="url" value="{{ video['url'] }}" />
+    <select name="type" class="download-select">
+      <option value="mp3">MP3</option>
+      <option value="mp4">MP4</option>
+    </select>
+    <button type="submit" class="download-button">Download</button>
+  </form>
+
+  <div class="progress-container">
+    <div
+      class="progress-bar"
+      id="progress-{{ loop.index }}"
+      style="width: 0%"
+    ></div>
+  </div>
+</div>
+{% endfor %}
+
+<script>
+  function handleDownload(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+    const progressBar = form.nextElementSibling.querySelector(".progress-bar");
+
+    fetch("/download", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => {
+        if (response.ok) {
+          // Start tracking download progress
+          const reader = response.body.getReader();
+          const contentLength = +response.headers.get("Content-Length");
+          let receivedLength = 0;
+
+          return reader.read().then(function process({ done, value }) {
+            if (done) {
+              progressBar.style.width = "100%"; // download complete
+              return;
+            }
+
+            receivedLength += value.length;
+            const percentComplete = (receivedLength / contentLength) * 100;
+            progressBar.style.width = `${percentComplete}%`; // update progress bar
+
+            return reader.read().then(process);
+          });
+        } else {
+          console.error("Download failed");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+</script>

@@ -1,0 +1,22 @@
+{% for video in videos %}
+<div class="video-card">
+  <img src="{{ video.thumbnail }}" alt="Thumbnail" class="thumbnail" />
+  <p class="video-uploaded">Uploaded on: {{ video.uploaded }}</p>
+  <h3 class="video-title">{{ video.title }}</h3>
+  <div class="video-info">
+    <a href="{{ video.url }}" target="_blank" class="watch-button"
+      >Watch on YouTube</a
+    >
+    <div class="actions">
+      <form method="post" action="/download" class="download-form">
+        <input type="hidden" name="url" value="{{ video.url }}" />
+        <select name="type" class="download-select">
+          <option value="mp3">Download MP3</option>
+          <option value="mp4">Download MP4</option>
+        </select>
+        <button type="submit" class="download-button">Download</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}

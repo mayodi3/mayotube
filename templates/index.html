@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mayotube</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}" />
+  </head>
+  <body>
+    <div class="container">
+      <h2 class="main-title">
+        <sub class="subtitle">
+          <i>Download YT mp3 or mp4</i>
+        </sub>
+        MayoTube
+        <sup class="subtitle">
+          <i>Powered by Mayodi</i>
+        </sup>
+      </h2>
+
+      <form id="search-form" class="search-form">
+        <input
+          type="text"
+          name="query"
+          id="query"
+          class="search-input"
+          placeholder="Search videos..."
+          required
+        />
+        <button type="submit" class="search-button">Search</button>
+      </form>
+
+      <div id="videos" class="video-grid"></div>
+
+      <button id="load-more" class="load-more-button" style="display: none">
+        Load More
+      </button>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const searchForm = document.getElementById("search-form");
+        const queryInput = document.getElementById("query");
+        const videosDiv = document.getElementById("videos");
+        const loadMoreBtn = document.getElementById("load-more");
+
+        searchForm.addEventListener("submit", function (event) {
+          event.preventDefault();
+          const query = queryInput.value;
+
+          fetch("/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ query }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              videosDiv.innerHTML = data.videos_html;
+              if (data.nextPageToken) {
+                loadMoreBtn.setAttribute("data-token", data.nextPageToken);
+                loadMoreBtn.style.display = "block";
+              } else {
+                loadMoreBtn.style.display = "none";
+              }
+            })
+            .catch((error) => console.error("Error:", error));
+        });
+
+        // Handle "Load More" button click
+        loadMoreBtn.addEventListener("click", function () {
+          const nextPageToken = loadMoreBtn.getAttribute("data-token");
+          const query = queryInput.value;
+
+          fetch("/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ query, page_token: nextPageToken }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              const tempDiv = document.createElement("div");
+              tempDiv.innerHTML = data.videos_html;
+              while (tempDiv.firstChild) {
+                videosDiv.appendChild(tempDiv.firstChild);
+              }
+              if (data.nextPageToken) {
+                loadMoreBtn.setAttribute("data-token", data.nextPageToken);
+              } else {
+                loadMoreBtn.style.display = "none";
+              }
+            })
+            .catch((error) => console.error("Error:", error));
+        });
+      });
+    </script>
+  </body>
+</html>
